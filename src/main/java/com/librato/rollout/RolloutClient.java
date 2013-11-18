@@ -77,7 +77,7 @@ public class RolloutClient {
         framework.getCuratorListenable().removeListener(listener);
     }
 
-    public boolean userFeatureActive(final String feature, final int userId) {
+    public boolean userFeatureActive(final String feature, RolloutUser user) {
         if (!isStarted.get()) {
             throw new RuntimeException("RolloutClient not started!");
         }
@@ -93,10 +93,30 @@ public class RolloutClient {
             return false;
         }
 
-        //TODO: percentage, group
+        // Check user ID first
         final List<String> userIds = Arrays.asList(splitResult[2].split(","));
-        final String uid = String.valueOf(userId);
-        return userIds.contains(uid);
+        final String uid = String.valueOf(user.getId());
+        if (userIds.contains(uid)) {
+            return true;
+        }
+
+        // Next, check percentage
+        final int percentage = Integer.parseInt(splitResult[0]);
+        if (user.getId() % 10 < percentage / 10) {
+            return true;
+        }
+
+        // Lastly, check groups
+        final List<String> groups = Arrays.asList(splitResult[1].split(","));
+        final List<String> userGroups = user.getGroups();
+        if (userGroups != null && !userGroups.isEmpty()) {
+            for (String group : groups) {
+                if (user.getGroups().contains(group)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void setWatch() throws Exception {

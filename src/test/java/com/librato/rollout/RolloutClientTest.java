@@ -1,5 +1,6 @@
 package com.librato.rollout;
 
+import com.google.common.collect.Lists;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.ExponentialBackoffRetry;
@@ -9,6 +10,8 @@ import org.apache.zookeeper.data.Stat;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,23 +38,79 @@ public class RolloutClientTest {
     }
 
     @Test
-    public void testUserFeatureActive() throws Exception {
+    public void testUserIDFeatureActive() throws Exception {
+        User user1 = new User(1, Lists.newArrayList("foo"));
+        User user2 = new User(2, Lists.newArrayList( "bar"));
         RolloutClient client = null;
         try {
             client = new RolloutClient(framework, rolloutPath);
             client.start();
 
-            assertFalse(client.userFeatureActive("nosuchfeature", 1));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", 1));
-            assertFalse(client.userFeatureActive("hello", 2));
-            assertFalse(client.userFeatureActive("nosuchfeature", 1));
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertFalse(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1,2\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", 1));
-            assertTrue(client.userFeatureActive("hello", 2));
-            assertFalse(client.userFeatureActive("nosuchfeature", 1));
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertTrue(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+        } finally {
+            if (client != null) {
+                client.stop();
+            }
+        }
+    }
+
+    @Test
+    public void testUserGroupsFeatureActive() throws Exception {
+        User user1 = new User(1, Lists.newArrayList("foo"));
+        User user2 = new User(2, Lists.newArrayList( "bar"));
+        RolloutClient client = null;
+        try {
+            client = new RolloutClient(framework, rolloutPath);
+            client.start();
+
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|foo|\"}".getBytes());
+            Thread.sleep(100);
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertFalse(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|foo,bar|\"}".getBytes());
+            Thread.sleep(100);
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertTrue(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+        } finally {
+            if (client != null) {
+                client.stop();
+            }
+        }
+    }
+
+    @Test
+    public void testUserPercentageFeatureActive() throws Exception {
+        User user1 = new User(1, Lists.newArrayList("foo"));
+        User user2 = new User(2, Lists.newArrayList( "bar"));
+        RolloutClient client = null;
+        try {
+            client = new RolloutClient(framework, rolloutPath);
+            client.start();
+
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"25||\"}".getBytes());
+            Thread.sleep(100);
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertFalse(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"50||\"}".getBytes());
+            Thread.sleep(100);
+            assertTrue(client.userFeatureActive("hello", user1));
+            assertTrue(client.userFeatureActive("hello", user2));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
         } finally {
             if (client != null) {
                 client.stop();
@@ -61,6 +120,7 @@ public class RolloutClientTest {
 
     @Test
     public void testInvalidJSON() throws Exception {
+        User user1 = new User(1, Lists.newArrayList("foo"));
         RolloutClient client = null;
         try {
             client = new RolloutClient(framework, rolloutPath);
@@ -68,16 +128,36 @@ public class RolloutClientTest {
 
             framework.setData().forPath(rolloutPath, "not json".getBytes());
             Thread.sleep(100);
-            assertFalse(client.userFeatureActive("nosuchfeature", 1));
+            assertFalse(client.userFeatureActive("nosuchfeature", user1));
 
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1\"}".getBytes());
             Thread.sleep(100);
 
-            assertTrue(client.userFeatureActive("hello", 1));
+            assertTrue(client.userFeatureActive("hello", user1));
         } finally {
             if (client != null) {
                 client.stop();
             }
+        }
+    }
+
+    class User implements RolloutUser {
+        private final int id;
+        private final List<String> groups;
+
+        public User(int id, List<String> groups) {
+            this.id = id;
+            this.groups = groups;
+        }
+
+        @Override
+        public int getId() {
+            return id;
+        }
+
+        @Override
+        public List<String> getGroups() {
+            return groups;
         }
     }
 }
