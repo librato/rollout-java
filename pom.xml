@@ -6,7 +6,27 @@
 
   <groupId>com.librato.rollout</groupId>
   <artifactId>rollout</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.1</version>
+  <packaging>jar</packaging>
+  <name>Rollout for Java</name>
+  <url>https://github.com/librato/rollout-java</url>
+  <licenses>
+    <license>
+      <name>BSD License</name>
+      <url>https://github.com/librato/rollout-java/blob/master/LICENSE</url>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/librato/rollout-java/</url>
+    <connection>scm:git:https://github.com/librato/rollout-java/</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>jaredkuolt</id>
+      <name>Jared Kuolt</name>
+      <email>jared.kuolt@gmail.com</email>
+    </developer>
+  </developers>
 
   <dependencies>
     <dependency>
