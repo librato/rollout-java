@@ -6,6 +6,6 @@ import java.util.List;
  * TODO: Document
  */
 public interface RolloutUser {
-    public int getId();
+    public long getId();
     public List<String> getGroups();
 }

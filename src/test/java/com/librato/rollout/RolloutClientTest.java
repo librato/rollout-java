@@ -142,16 +142,16 @@ public class RolloutClientTest {
     }
 
     class User implements RolloutUser {
-        private final int id;
+        private final long id;
         private final List<String> groups;
 
-        public User(int id, List<String> groups) {
+        public User(long id, List<String> groups) {
             this.id = id;
             this.groups = groups;
         }
 
         @Override
-        public int getId() {
+        public long getId() {
             return id;
         }
 
