@@ -6,7 +6,7 @@
 
   <groupId>com.librato.rollout</groupId>
   <artifactId>rollout</artifactId>
-  <version>0.1</version>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Rollout for Java</name>
   <url>https://github.com/librato/rollout-java</url>
@@ -16,9 +16,15 @@
       <url>https://github.com/librato/rollout-java/blob/master/LICENSE</url>
     </license>
   </licenses>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
   <scm>
     <url>https://github.com/librato/rollout-java/</url>
-    <connection>scm:git:https://github.com/librato/rollout-java/</connection>
+    <connection>scm:git:git://github.com/librato/rollout-java/</connection>
+    <developerConnection>scm:git:git@github.com:librato/rollout-java/</developerConnection>
   </scm>
   <developers>
     <developer>
@@ -49,6 +55,19 @@
             <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
             </goals>
           </execution>
         </executions>
