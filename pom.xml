@@ -23,8 +23,8 @@
   </parent>
   <scm>
     <url>https://github.com/librato/rollout-java/</url>
-    <connection>scm:git:git://github.com/librato/rollout-java/</connection>
-    <developerConnection>scm:git:git@github.com:librato/rollout-java/</developerConnection>
+    <connection>scm:git:git://github.com/librato/rollout-java</connection>
+    <developerConnection>scm:git:git@github.com:librato/rollout-java</developerConnection>
   </scm>
   <developers>
     <developer>
