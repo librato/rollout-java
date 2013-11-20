@@ -47,12 +47,12 @@ public class RolloutClientTest {
             client.start();
 
             assertFalse(client.userFeatureActive("nosuchfeature", user1));
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", user1));
             assertFalse(client.userFeatureActive("hello", user2));
             assertFalse(client.userFeatureActive("nosuchfeature", user1));
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1,2\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1,2|\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", user1));
             assertTrue(client.userFeatureActive("hello", user2));
@@ -74,12 +74,12 @@ public class RolloutClientTest {
             client.start();
 
             assertFalse(client.userFeatureActive("nosuchfeature", user1));
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|foo|\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||foo\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", user1));
             assertFalse(client.userFeatureActive("hello", user2));
             assertFalse(client.userFeatureActive("nosuchfeature", user1));
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|foo,bar|\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||foo,bar\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", user1));
             assertTrue(client.userFeatureActive("hello", user2));
@@ -130,7 +130,7 @@ public class RolloutClientTest {
             Thread.sleep(100);
             assertFalse(client.userFeatureActive("nosuchfeature", user1));
 
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||1\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\"}".getBytes());
             Thread.sleep(100);
 
             assertTrue(client.userFeatureActive("hello", user1));

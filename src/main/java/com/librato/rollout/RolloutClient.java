@@ -94,7 +94,7 @@ public class RolloutClient {
         }
 
         // Check user ID first
-        final List<String> userIds = Arrays.asList(splitResult[2].split(","));
+        final List<String> userIds = Arrays.asList(splitResult[1].split(","));
         final String uid = String.valueOf(user.getId());
         if (userIds.contains(uid)) {
             return true;
@@ -107,7 +107,7 @@ public class RolloutClient {
         }
 
         // Lastly, check groups
-        final List<String> groups = Arrays.asList(splitResult[1].split(","));
+        final List<String> groups = Arrays.asList(splitResult[2].split(","));
         final List<String> userGroups = user.getGroups();
         if (userGroups != null && !userGroups.isEmpty()) {
             for (String group : groups) {
