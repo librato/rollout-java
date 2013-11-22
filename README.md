@@ -8,6 +8,14 @@ welcome.
 
 ## Getting started
 
+Add the dependency to your `pom.xml`:
+
+    <dependency>
+        <groupId>com.librato.rollout</groupId>
+        <artifactId>rollout</artifactId>
+        <version>0.2</version>
+    </dependency>
+
 First create your `CuratorFramework` and pass that into a new `ZookeeperAdapter` along with the Zookeeper path used in
 rollout, then pass that along to a new `RolloutClient`:
 
