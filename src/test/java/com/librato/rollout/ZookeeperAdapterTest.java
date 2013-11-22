@@ -40,8 +40,6 @@ public class ZookeeperAdapterTest {
 
     @Test
     public void testUserIDFeatureActive() throws Exception {
-        User user1 = new User(1, Lists.newArrayList("foo"));
-        User user2 = new User(2, Lists.newArrayList( "bar"));
         RolloutClient client;
         ZookeeperAdapter adapter = null;
         try {
@@ -49,17 +47,17 @@ public class ZookeeperAdapterTest {
             adapter.start();
             client = new RolloutClient(adapter);
 
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertFalse(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertFalse(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1,2|\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertTrue(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
         } finally {
             if (adapter != null) {
                 adapter.stop();
@@ -69,8 +67,6 @@ public class ZookeeperAdapterTest {
 
     @Test
     public void testUserGroupsFeatureActive() throws Exception {
-        User user1 = new User(1, Lists.newArrayList("foo"));
-        User user2 = new User(2, Lists.newArrayList( "bar"));
         RolloutClient client;
         ZookeeperAdapter adapter = null;
         try {
@@ -78,17 +74,17 @@ public class ZookeeperAdapterTest {
             adapter.start();
             client = new RolloutClient(adapter);
 
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||foo\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertFalse(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertFalse(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||foo,bar\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertTrue(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
         } finally {
             if (adapter != null) {
                 adapter.stop();
@@ -98,8 +94,6 @@ public class ZookeeperAdapterTest {
 
     @Test
     public void testUserPercentageFeatureActive() throws Exception {
-        User user1 = new User(1, Lists.newArrayList("foo"));
-        User user2 = new User(2, Lists.newArrayList( "bar"));
         RolloutClient client;
         ZookeeperAdapter adapter = null;
         try {
@@ -107,17 +101,17 @@ public class ZookeeperAdapterTest {
             adapter.start();
             client = new RolloutClient(adapter);
 
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"25||\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertFalse(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertFalse(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"50||\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", user1));
-            assertTrue(client.userFeatureActive("hello", user2));
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
         } finally {
             if (adapter != null) {
                 adapter.stop();
@@ -127,7 +121,6 @@ public class ZookeeperAdapterTest {
 
     @Test
     public void testInvalidJSON() throws Exception {
-        User user1 = new User(1, Lists.newArrayList("foo"));
         RolloutClient client;
         ZookeeperAdapter adapter = null;
         try {
@@ -137,36 +130,16 @@ public class ZookeeperAdapterTest {
 
             framework.setData().forPath(rolloutPath, "not json".getBytes());
             Thread.sleep(100);
-            assertFalse(client.userFeatureActive("nosuchfeature", user1));
+            assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
 
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\"}".getBytes());
             Thread.sleep(100);
 
-            assertTrue(client.userFeatureActive("hello", user1));
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
         } finally {
             if (adapter != null) {
                 adapter.stop();
             }
-        }
-    }
-
-    class User implements RolloutUser {
-        private final long id;
-        private final List<String> groups;
-
-        public User(long id, List<String> groups) {
-            this.id = id;
-            this.groups = groups;
-        }
-
-        @Override
-        public long getId() {
-            return id;
-        }
-
-        @Override
-        public List<String> getGroups() {
-            return groups;
         }
     }
 }

@@ -3,6 +3,8 @@ package com.librato.rollout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * TODO: Document
  */
@@ -14,7 +16,7 @@ public class RolloutClient {
         this.adapter = adapter;
     }
 
-    public boolean userFeatureActive(final String feature, final RolloutUser user) {
-        return adapter.userFeatureActive(feature, user);
+    public boolean userFeatureActive(final String feature, final long userId, List<String> userGroups) {
+        return adapter.userFeatureActive(feature, userId, userGroups);
     }
 }

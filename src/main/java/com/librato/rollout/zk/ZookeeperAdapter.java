@@ -5,7 +5,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutAdapter;
-import com.librato.rollout.RolloutUser;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.api.CuratorEvent;
 import com.netflix.curator.framework.api.CuratorEventType;
@@ -59,7 +58,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
     }
 
     @Override
-    public boolean userFeatureActive(String feature, RolloutUser user) {
+    public boolean userFeatureActive(String feature, long userId, List<String> userGroups) {
         // TODO: This whole method is inefficient as it parses the data every time
         final String value = features.get().get(String.format("feature:%s", feature));
         if (value == null) {
@@ -74,23 +73,22 @@ public class ZookeeperAdapter implements RolloutAdapter {
 
         // Check user ID first
         final List<String> userIds = Arrays.asList(splitResult[1].split(","));
-        final String uid = String.valueOf(user.getId());
+        final String uid = String.valueOf(userId);
         if (userIds.contains(uid)) {
             return true;
         }
 
         // Next, check percentage
         final int percentage = Integer.parseInt(splitResult[0]);
-        if (user.getId() % 10 < percentage / 10) {
+        if (userId % 10 < percentage / 10) {
             return true;
         }
 
         // Lastly, check groups
         final List<String> groups = Arrays.asList(splitResult[2].split(","));
-        final List<String> userGroups = user.getGroups();
         if (userGroups != null && !userGroups.isEmpty()) {
             for (String group : groups) {
-                if (user.getGroups().contains(group)) {
+                if (userGroups.contains(group)) {
                     return true;
                 }
             }

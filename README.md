@@ -8,7 +8,7 @@ welcome.
 
 ## Getting started
 
-First create your `CuratorFramework` and pass that into a new `ZookeeperAdapter` along with the Zookeeper node used in
+First create your `CuratorFramework` and pass that into a new `ZookeeperAdapter` along with the Zookeeper path used in
 rollout, then pass that along to a new `RolloutClient`:
 
     CuratorFramework framework = CuratorFrameworkFactory.builder()
@@ -17,14 +17,13 @@ rollout, then pass that along to a new `RolloutClient`:
             .build();
     framework.start();
 
-    ZookeeperAdapter adapter = new ZookeeperAdapter(framework, rolloutPath);
+    ZookeeperAdapter adapter = new ZookeeperAdapter(framework, "/rollout/users");
     adapter.start(); // You must call start for this to connect to Zookeeper and set watches
     RolloutClient client = new RolloutClient(adapter);
 
-Now you may use the client to confirm feature flags for any `RolloutUser`:
+Now you may use the client to confirm feature flags for any `long` ID and `List<String>` of groups for a given user:
 
-    RolloutUser user = /* your code here */
-    if (client.userFeatureActive("some_feature", user) {
+    if (client.userFeatureActive("some_feature", myUser.getId(), myUser.getGroups()) {
         /* do something */
     }
 
