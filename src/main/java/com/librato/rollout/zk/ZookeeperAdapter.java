@@ -71,7 +71,13 @@ public class ZookeeperAdapter implements RolloutAdapter {
             return false;
         }
 
-        // Check user ID first
+        final List<String> groups = Arrays.asList(splitResult[2].split(","));
+        // Short-circuit
+        if (groups.contains("all")) {
+            return true;
+        }
+
+        // Check user ID
         final List<String> userIds = Arrays.asList(splitResult[1].split(","));
         final String uid = String.valueOf(userId);
         if (userIds.contains(uid)) {
@@ -85,7 +91,6 @@ public class ZookeeperAdapter implements RolloutAdapter {
         }
 
         // Lastly, check groups
-        final List<String> groups = Arrays.asList(splitResult[2].split(","));
         if (userGroups != null && !userGroups.isEmpty()) {
             for (String group : groups) {
                 if (userGroups.contains(group)) {

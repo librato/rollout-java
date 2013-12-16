@@ -93,6 +93,26 @@ public class ZookeeperAdapterTest {
     }
 
     @Test
+    public void testUserAllActive() throws Exception {
+        RolloutClient client;
+        ZookeeperAdapter adapter = null;
+        try {
+            adapter = new ZookeeperAdapter(framework, rolloutPath);
+            adapter.start();
+            client = new RolloutClient(adapter);
+
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0||all\"}".getBytes());
+            Thread.sleep(100);
+            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+        } finally {
+            if (adapter != null) {
+                adapter.stop();
+            }
+        }
+    }
+
+    @Test
     public void testUserPercentageFeatureActive() throws Exception {
         RolloutClient client;
         ZookeeperAdapter adapter = null;
