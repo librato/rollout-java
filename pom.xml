@@ -4,7 +4,7 @@
 
   <groupId>com.librato.rollout</groupId>
   <artifactId>rollout</artifactId>
-  <version>0.3</version>
+  <version>0.4-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Rollout for Java</name>
   <url>https://github.com/librato/rollout-java</url>
