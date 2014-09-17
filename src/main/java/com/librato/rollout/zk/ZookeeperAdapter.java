@@ -5,10 +5,11 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutAdapter;
-import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.api.CuratorEvent;
-import com.netflix.curator.framework.api.CuratorEventType;
-import com.netflix.curator.framework.api.CuratorListener;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.api.CuratorEvent;
+import org.apache.curator.framework.api.CuratorEventType;
+import org.apache.curator.framework.api.CuratorListener;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
         this.listener = new CuratorListener() {
             @Override
             public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-                if (!framework.isStarted() || !isStarted.get() || event.getType() != CuratorEventType.WATCHED || !rolloutPath.equals(event.getPath())) {
+                if (framework.getState() != CuratorFrameworkState.STARTED || !isStarted.get() || event.getType() != CuratorEventType.WATCHED || !rolloutPath.equals(event.getPath())) {
                     return;
                 }
                 try {
@@ -105,7 +106,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
         if (!isStarted.compareAndSet(false, true)) {
             throw new RuntimeException("Service already started!");
         }
-        if (!framework.isStarted()) {
+        if (framework.getState() != CuratorFrameworkState.STARTED) {
             throw new RuntimeException("CuratorFramework is not started!");
         }
         // We initialize the value here to mitigate the race condition of watching the path and attempting to get a value
