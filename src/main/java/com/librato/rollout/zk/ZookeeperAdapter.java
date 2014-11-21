@@ -39,10 +39,6 @@ public class ZookeeperAdapter implements RolloutAdapter {
     private final CuratorFramework framework;
     private final String rolloutPath;
     private final CuratorListener listener;
-    private final Cache<String, String[]> cache = CacheBuilder.newBuilder()
-            .maximumSize(1000)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
-            .build();
 
     public ZookeeperAdapter(final CuratorFramework framework, final String rolloutPath) {
         Preconditions.checkNotNull(framework, "CuratorFramework cannot be null");
@@ -81,22 +77,11 @@ public class ZookeeperAdapter implements RolloutAdapter {
         if (value == null) {
             return null;
         }
-        try {
-            // TODO: make POJO for 'parsed' values
-            return cache.get(value, new Callable<String[]>() {
-                @Override
-                public String[] call() throws Exception {
-                    final String[] splitResult = Iterables.toArray(splitter.split(value), String.class);
-                    if (splitResult.length != 3) {
-                        throw new RuntimeException(String.format("Invalid format: %s, (length %d)", value, splitResult.length));
-                    }
-                    return splitResult;
-                }
-            });
-        } catch (ExecutionException e) {
-            log.warn("error", e);
+        final String[] splitResult = Iterables.toArray(splitter.split(value), String.class);
+        if (splitResult.length != 3) {
+            throw new RuntimeException(String.format("Invalid format: %s, (length %d)", value, splitResult.length));
         }
-        return null;
+        return splitResult;
     }
 
     @Override
