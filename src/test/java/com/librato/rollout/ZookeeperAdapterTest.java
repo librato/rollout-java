@@ -12,6 +12,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.Random;
+
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -19,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 public class ZookeeperAdapterTest {
     private static final Logger log = LoggerFactory.getLogger(ZookeeperAdapterTest.class);
     private static final String rolloutPath = "/rollout-test-node";
+    private static final Random rand = new Random();
     private static CuratorFramework framework;
 
     @BeforeClass
@@ -132,6 +136,12 @@ public class ZookeeperAdapterTest {
             assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
             assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
+
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"100||\"}".getBytes());
+            Thread.sleep(100);
+            for (int i = 0; i < 10000; i++) {
+                assertTrue(client.userFeatureActive("hello", rand.nextInt(), Collections.<String>emptyList()));
+            }
         } finally {
             if (adapter != null) {
                 adapter.stop();

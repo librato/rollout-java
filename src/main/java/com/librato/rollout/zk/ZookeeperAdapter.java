@@ -107,9 +107,6 @@ public class ZookeeperAdapter implements RolloutAdapter {
         }
         // Check percentage first as it's most efficient
         final int percentage = Integer.parseInt(splitResult[0]);
-        if (percentage == 100) {
-            return true;
-        }
         if (userId % 100 < percentage) {
             return true;
         }
