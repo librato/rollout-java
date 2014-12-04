@@ -10,30 +10,36 @@ welcome.
 
 Add the dependency to your `pom.xml`:
 
-    <dependency>
-        <groupId>com.librato.rollout</groupId>
-        <artifactId>rollout</artifactId>
-        <version>0.3</version>
-    </dependency>
+```xml
+<dependency>
+    <groupId>com.librato.rollout</groupId>
+    <artifactId>rollout</artifactId>
+    <version>0.5</version>
+</dependency>
+```
 
 First create your `CuratorFramework` and pass that into a new `ZookeeperAdapter` along with the Zookeeper path used in
 rollout, then pass that along to a new `RolloutClient`:
 
-    CuratorFramework framework = CuratorFrameworkFactory.builder()
-            .connectString("localhost:2181")
-            .retryPolicy(new RetryNTimes(1, 100))
-            .build();
-    framework.start();
+```java
+CuratorFramework framework = CuratorFrameworkFactory.builder()
+        .connectString("localhost:2181")
+        .retryPolicy(new RetryNTimes(1, 100))
+        .build();
+framework.start();
 
-    ZookeeperAdapter adapter = new ZookeeperAdapter(framework, "/rollout/users");
-    adapter.start(); // You must call start for this to connect to Zookeeper and set watches
-    RolloutClient client = new RolloutClient(adapter);
+ZookeeperAdapter adapter = new ZookeeperAdapter(framework, "/rollout/users");
+adapter.start(); // You must call start for this to connect to Zookeeper and set watches
+RolloutClient client = new RolloutClient(adapter);
+```
 
 Now you may use the client to confirm feature flags for any `long` ID and `List<String>` of groups for a given user:
 
-    if (client.userFeatureActive("some_feature", myUser.getId(), myUser.getGroups()) {
-        /* do something */
-    }
+```java
+if (client.userFeatureActive("some_feature", myUser.getId(), myUser.getGroups()) {
+    /* do something */
+}
+```
 
 ## Testing
 
