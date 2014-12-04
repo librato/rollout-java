@@ -12,12 +12,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.Random;
+
+import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ZookeeperAdapterTest {
     private static final Logger log = LoggerFactory.getLogger(ZookeeperAdapterTest.class);
     private static final String rolloutPath = "/rollout-test-node";
+    private static final Random rand = new Random();
     private static CuratorFramework framework;
 
     @BeforeClass
@@ -122,14 +127,46 @@ public class ZookeeperAdapterTest {
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"25||\"}".getBytes());
             Thread.sleep(100);
-            assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
-            assertFalse(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
+            assertTrue(client.userFeatureActive("hello", 100, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", 124, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("hello", 125, Lists.newArrayList("bar")));
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"50||\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
             assertTrue(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
+
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"100||\"}".getBytes());
+            Thread.sleep(100);
+            for (int i = 0; i < 10000; i++) {
+                assertTrue(client.userFeatureActive("hello", rand.nextInt(), Collections.<String>emptyList()));
+            }
+        } finally {
+            if (adapter != null) {
+                adapter.stop();
+            }
+        }
+    }
+
+    @Test
+    public void testGetPercentage() throws Exception {
+        RolloutClient client;
+        ZookeeperAdapter adapter = null;
+        try {
+            adapter = new ZookeeperAdapter(framework, rolloutPath);
+            adapter.start();
+            client = new RolloutClient(adapter);
+
+            assertEquals(0, client.getPercentage("nosuchfeature"));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"25||\"}".getBytes());
+            Thread.sleep(100);
+            assertEquals(0, client.getPercentage("nosuchfeature"));
+            assertEquals(25, client.getPercentage("hello"));
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"50||\"}".getBytes());
+            Thread.sleep(100);
+            assertEquals(0, client.getPercentage("nosuchfeature"));
+            assertEquals(50, client.getPercentage("hello"));
         } finally {
             if (adapter != null) {
                 adapter.stop();

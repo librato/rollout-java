@@ -2,6 +2,8 @@ package com.librato.rollout.zk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutAdapter;
@@ -19,6 +21,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -59,17 +64,36 @@ public class ZookeeperAdapter implements RolloutAdapter {
     }
 
     @Override
-    public boolean userFeatureActive(String feature, long userId, List<String> userGroups) {
-        // TODO: This whole method is inefficient as it parses the data every time
+    public int getPercentage(String feature) {
+        final String[] splitResult = split(feature);
+        if (splitResult == null) {
+            return 0;
+        }
+        return Integer.parseInt(splitResult[0]);
+    }
+
+    private String[] split(String feature) {
         final String value = features.get().get(String.format("feature:%s", feature));
         if (value == null) {
-            return false;
+            return null;
         }
         final String[] splitResult = Iterables.toArray(splitter.split(value), String.class);
-
         if (splitResult.length != 3) {
-            log.warn("Invalid format: {}, (length {})", value, splitResult.length);
+            throw new RuntimeException(String.format("Invalid format: %s, (length %d)", value, splitResult.length));
+        }
+        return splitResult;
+    }
+
+    @Override
+    public boolean userFeatureActive(String feature, long userId, List<String> userGroups) {
+        final String[] splitResult = split(feature);
+        if (splitResult == null) {
             return false;
+        }
+        // Check percentage first as it's most efficient
+        final int percentage = Integer.parseInt(splitResult[0]);
+        if (userId % 100 < percentage) {
+            return true;
         }
 
         final List<String> groups = Arrays.asList(splitResult[2].split(","));
@@ -82,12 +106,6 @@ public class ZookeeperAdapter implements RolloutAdapter {
         final List<String> userIds = Arrays.asList(splitResult[1].split(","));
         final String uid = String.valueOf(userId);
         if (userIds.contains(uid)) {
-            return true;
-        }
-
-        // Next, check percentage
-        final int percentage = Integer.parseInt(splitResult[0]);
-        if (userId % 10 < percentage / 10) {
             return true;
         }
 

@@ -7,4 +7,5 @@ import java.util.List;
  */
 public interface RolloutAdapter {
     public boolean userFeatureActive(final String feature, long userId, List<String> userGroups);
+    public int getPercentage(final String feature);
 }

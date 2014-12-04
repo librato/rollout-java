@@ -19,4 +19,8 @@ public class RolloutClient {
     public boolean userFeatureActive(final String feature, final long userId, List<String> userGroups) {
         return adapter.userFeatureActive(feature, userId, userGroups);
     }
+
+    public int getPercentage(final String feature) {
+        return adapter.getPercentage(feature);
+    }
 }
