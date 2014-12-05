@@ -1,26 +1,33 @@
 package com.librato.rollout;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 
-/**
- * TODO: Document
- */
-public class RolloutClient {
-    private static final Logger log = LoggerFactory.getLogger(RolloutClient.class);
-    private final RolloutAdapter adapter;
+public interface RolloutClient {
+    /**
+     * @param feature    Rollout feature
+     * @param userId     id of the user for use when checking ids and percentages
+     * @param userGroups groups to check against
+     * @return true if feature is active based on user id, percentage, or group
+     */
+    public boolean userFeatureActive(final String feature, long userId, List<String> userGroups);
 
-    public RolloutClient(RolloutAdapter adapter) {
-        this.adapter = adapter;
-    }
+    /**
+     * @param feature Rollout feature
+     * @return Percentage of given feature, or 0 if feature does not exist
+     */
+    public int getPercentage(final String feature);
 
-    public boolean userFeatureActive(final String feature, final long userId, List<String> userGroups) {
-        return adapter.userFeatureActive(feature, userId, userGroups);
-    }
+    /**
+     * Start the client; must be called before checking features
+     *
+     * @throws Exception
+     */
+    public void start() throws Exception;
 
-    public int getPercentage(final String feature) {
-        return adapter.getPercentage(feature);
-    }
+    /**
+     * Stop the client
+     *
+     * @throws Exception
+     */
+    public void stop() throws Exception;
 }
