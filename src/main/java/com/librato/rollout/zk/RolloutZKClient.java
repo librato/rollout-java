@@ -2,11 +2,9 @@ package com.librato.rollout.zk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.librato.rollout.RolloutAdapter;
+import com.librato.rollout.RolloutClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.apache.curator.framework.api.CuratorEventType;
@@ -21,17 +19,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * TODO: Document
+ * Implementation of RolloutClient for use with Zookeeper, compatible with https://github.com/papertrail/rollout-zk
  */
-public class ZookeeperAdapter implements RolloutAdapter {
-    private static final Logger log = LoggerFactory.getLogger(ZookeeperAdapter.class);
+public class RolloutZKClient implements RolloutClient {
+    private static final Logger log = LoggerFactory.getLogger(RolloutZKClient.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Splitter splitter = Splitter.on('|');
     private final AtomicReference<Map<String, String>> features = new AtomicReference<Map<String, String>>();
@@ -40,7 +35,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
     private final String rolloutPath;
     private final CuratorListener listener;
 
-    public ZookeeperAdapter(final CuratorFramework framework, final String rolloutPath) {
+    public RolloutZKClient(final CuratorFramework framework, final String rolloutPath) {
         Preconditions.checkNotNull(framework, "CuratorFramework cannot be null");
         Preconditions.checkArgument(rolloutPath != null && !rolloutPath.isEmpty(), "rolloutPath cannot be null or blank");
         this.framework = framework;
@@ -120,6 +115,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
         return false;
     }
 
+    @Override
     public void start() throws Exception {
         if (!isStarted.compareAndSet(false, true)) {
             throw new RuntimeException("Service already started!");
@@ -134,6 +130,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
         setWatch();
     }
 
+    @Override
     public void stop() {
         if (!isStarted.compareAndSet(true, false)) {
             throw new RuntimeException("Service already stopped or never started!");
@@ -150,6 +147,7 @@ public class ZookeeperAdapter implements RolloutAdapter {
     }
 
     private Map<String, String> parseData(byte[] data) throws IOException {
-        return mapper.readValue(data, new TypeReference<Map<String, String>>() {});
+        return mapper.readValue(data, new TypeReference<Map<String, String>>() {
+        });
     }
 }
