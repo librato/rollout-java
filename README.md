@@ -14,7 +14,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>com.librato.rollout</groupId>
     <artifactId>rollout</artifactId>
-    <version>0.5</version>
+    <version>0.6</version>
 </dependency>
 ```
 
