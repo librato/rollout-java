@@ -128,6 +128,7 @@ public class RolloutZKClient implements RolloutClient {
         });
         ImmutableMap.Builder<String, Entry> bldr = ImmutableMap.builder();
         for (Map.Entry<String, String> e : raw.entrySet()) {
+            if (e.getKey().equals("feature:__features__")) continue; // ignore this non-feature special case
             String ftr = e.getKey().substring(8); // strip the pre-pended 'feature:'
             bldr.put(ftr, Entry.fromString(e.getValue()));
         }

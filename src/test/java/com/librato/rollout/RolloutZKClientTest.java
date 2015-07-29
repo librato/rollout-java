@@ -46,7 +46,7 @@ public class RolloutZKClientTest {
             client.start();
 
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
-            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\", \"feature:another\": \"0|1,2|\"}".getBytes());
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\", \"feature:another\": \"0|1,2|\",  \"feature:__features__\":\"hello,another\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
             assertTrue(client.userFeatureActive("another", 1, Lists.newArrayList("foo")));
