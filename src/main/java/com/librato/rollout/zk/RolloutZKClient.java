@@ -134,7 +134,6 @@ public class RolloutZKClient implements RolloutClient {
             String ftr = e.getKey().substring(8); // strip the pre-pended 'feature:'
             bldr.put(ftr, Entry.fromString(e.getValue()));
         }
-        log.info("poop {}", bldr.build());
         return bldr.build();
     }
 
