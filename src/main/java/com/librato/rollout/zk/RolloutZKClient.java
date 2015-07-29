@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class RolloutZKClient implements RolloutClient {
     private static final Logger log = LoggerFactory.getLogger(RolloutZKClient.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Splitter splitter = Splitter.on('|');
-    private final AtomicReference<Map<String, String>> features = new AtomicReference<Map<String, String>>();
+    private final AtomicReference<Map<String, Entry>> features = new AtomicReference<Map<String, Entry>>();
     private final AtomicBoolean isStarted = new AtomicBoolean(false);
     private final CuratorFramework framework;
     private final String rolloutPath;
@@ -43,7 +44,10 @@ public class RolloutZKClient implements RolloutClient {
         this.listener = new CuratorListener() {
             @Override
             public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-                if (framework.getState() != CuratorFrameworkState.STARTED || !isStarted.get() || event.getType() != CuratorEventType.WATCHED || !rolloutPath.equals(event.getPath())) {
+                if (framework.getState() != CuratorFrameworkState.STARTED ||
+                        !isStarted.get() ||
+                        event.getType() != CuratorEventType.WATCHED ||
+                        !rolloutPath.equals(event.getPath())) {
                     return;
                 }
                 try {
@@ -60,53 +64,26 @@ public class RolloutZKClient implements RolloutClient {
 
     @Override
     public int getPercentage(String feature) {
-        final String[] splitResult = split(feature);
-        if (splitResult == null) {
-            return 0;
-        }
-        return Integer.parseInt(splitResult[0]);
-    }
-
-    private String[] split(String feature) {
-        final String value = features.get().get(String.format("feature:%s", feature));
-        if (value == null) {
-            return null;
-        }
-        final String[] splitResult = Iterables.toArray(splitter.split(value), String.class);
-        if (splitResult.length != 3) {
-            throw new RuntimeException(String.format("Invalid format: %s, (length %d)", value, splitResult.length));
-        }
-        return splitResult;
+        final Entry entry = features.get().get(feature);
+        if (entry == null) return 0;
+        return entry.percentage;
     }
 
     @Override
     public boolean userFeatureActive(String feature, long userId, List<String> userGroups) {
-        final String[] splitResult = split(feature);
-        if (splitResult == null) {
-            return false;
-        }
-        // Check percentage first as it's most efficient
-        final int percentage = Integer.parseInt(splitResult[0]);
-        if (userId % 100 < percentage) {
+        final Entry entry = features.get().get(feature);
+        if (entry == null) return false;
+        if (userId % 100 < entry.percentage) {
             return true;
         }
-
-        final List<String> groups = Arrays.asList(splitResult[2].split(","));
-        // Short-circuit
-        if (groups.contains("all")) {
+        if (entry.groups.contains("all")) {
             return true;
         }
-
-        // Check user ID
-        final List<String> userIds = Arrays.asList(splitResult[1].split(","));
-        final String uid = String.valueOf(userId);
-        if (userIds.contains(uid)) {
+        if (entry.userIds.contains(userId)) {
             return true;
         }
-
-        // Lastly, check groups
         if (userGroups != null && !userGroups.isEmpty()) {
-            for (String group : groups) {
+            for (String group : entry.groups) {
                 if (userGroups.contains(group)) {
                     return true;
                 }
@@ -146,8 +123,41 @@ public class RolloutZKClient implements RolloutClient {
         features.set(ImmutableMap.copyOf(parseData(framework.getData().forPath(rolloutPath))));
     }
 
-    private Map<String, String> parseData(byte[] data) throws IOException {
-        return mapper.readValue(data, new TypeReference<Map<String, String>>() {
+    private Map<String, Entry> parseData(byte[] data) throws IOException {
+        Map<String, String> raw = mapper.readValue(data, new TypeReference<Map<String, String>>() {
         });
+        ImmutableMap.Builder<String, Entry> bldr = ImmutableMap.builder();
+        for (Map.Entry<String, String> e : raw.entrySet()) {
+            String ftr = e.getKey().substring(8); // strip the pre-pended 'feature:'
+            bldr.put(ftr, Entry.fromString(e.getValue()));
+        }
+        return bldr.build();
+    }
+
+    static class Entry {
+        public final int percentage;
+        public final List<Long> userIds;
+        public final List<String> groups;
+
+        Entry(int percentage, List<Long> userIds, List<String> groups) {
+            this.percentage = percentage;
+            this.userIds = userIds;
+            this.groups = groups;
+        }
+
+        public static Entry fromString(String s) {
+            final String[] splitResult = Iterables.toArray(splitter.split(s), String.class);
+            if (splitResult.length != 3) {
+                throw new RuntimeException(String.format("Invalid format: %s, (length %d)", s, splitResult.length));
+            }
+            final int percentage = Integer.parseInt(splitResult[0]);
+            final List<String> groups = Arrays.asList(splitResult[2].split(","));
+            final List<Long> userIds = new ArrayList<Long>();
+            for (String id : splitResult[1].split(",")) {
+                if (id.isEmpty()) continue;
+                userIds.add(Long.valueOf(id));
+            }
+            return new Entry(percentage, userIds, groups);
+        }
     }
 }
