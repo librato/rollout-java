@@ -10,7 +10,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>com.librato.rollout</groupId>
     <artifactId>rollout</artifactId>
-    <version>0.8</version>
+    <version>0.9</version>
 </dependency>
 ```
 
