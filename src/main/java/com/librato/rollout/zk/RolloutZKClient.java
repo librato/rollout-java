@@ -130,7 +130,7 @@ public class RolloutZKClient implements RolloutClient {
         for (Map.Entry<String, String> e : raw.entrySet()) {
             if (e.getKey().equals("feature:__features__")) continue; // ignore this non-feature special case
             String ftr = e.getKey().substring(8); // strip the pre-pended 'feature:'
-            bldr.put(ftr, Entry.fromString(e.getValue()));
+            bldr.put(ftr, Entry.fromString(e.getValue(), ftr));
         }
         return bldr.build();
     }
@@ -146,17 +146,26 @@ public class RolloutZKClient implements RolloutClient {
             this.groups = groups;
         }
 
-        public static Entry fromString(String s) {
+        public static Entry fromString(String s, String key) {
             final String[] splitResult = Iterables.toArray(splitter.split(s), String.class);
             if (splitResult.length != 3) {
                 throw new RuntimeException(String.format("Invalid format: %s, (length %d)", s, splitResult.length));
             }
-            final int percentage = Integer.parseInt(splitResult[0]);
+            int percentage = 0;
+            try {
+                percentage = Integer.parseInt(splitResult[0]);
+            } catch (NumberFormatException ex) {
+                log.warn("Couldn't parse `{}` as a long, ignoring percentage for key `{}`", splitResult[0], key);
+            }
             final List<String> groups = Arrays.asList(splitResult[2].split(","));
             final List<Long> userIds = new ArrayList<Long>();
             for (String id : splitResult[1].split(",")) {
                 if (id.isEmpty()) continue;
-                userIds.add(Long.valueOf(id));
+                try {
+                    userIds.add(Long.valueOf(id));
+                } catch (NumberFormatException ex) {
+                    log.warn("Couldn't parse `{}` as a long, ignoring user id for key `{}`", id, key);
+                }
             }
             return new Entry(percentage, userIds, groups);
         }

@@ -186,4 +186,18 @@ public class RolloutZKClientTest {
             }
         }
     }
+
+    @Test
+    public void testInvalidUserIdAndPercentage() throws Exception {
+        RolloutClient client = null;
+        try {
+            framework.setData().forPath(rolloutPath, "{\"feature:12345\": \"notapercentage|hello|\"}".getBytes());
+            client = new RolloutZKClient(framework, rolloutPath);
+            client.start();
+        } finally {
+            if (client != null) {
+                client.stop();
+            }
+        }
+    }
 }
