@@ -16,7 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -75,7 +79,7 @@ public class RolloutZKClient implements RolloutClient {
     public boolean userFeatureActive(String feature, long userId, List<String> userGroups) {
         final Entry entry = features.get().get(feature);
         if (entry == null) return false;
-        if (userId % 100 < entry.percentage) {
+        if (Math.abs(userId) % 100 < entry.percentage) {
             return true;
         }
         if (entry.groups.contains("all")) {
