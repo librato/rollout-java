@@ -50,6 +50,8 @@ public class RolloutZKClientTest {
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", 1, Lists.newArrayList("foo")));
             assertTrue(client.userFeatureActive("another", 1, Lists.newArrayList("foo")));
+            assertFalse(client.userFeatureActive("another", -11111, Lists.newArrayList("foo")));
+            assertFalse(client.userFeatureActive("hello", -11112, Lists.newArrayList("foo")));
             assertFalse(client.userFeatureActive("hello", 2, Lists.newArrayList("bar")));
             assertTrue(client.userFeatureActive("another", 2, Lists.newArrayList("foo")));
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
@@ -121,8 +123,10 @@ public class RolloutZKClientTest {
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"25||\"}".getBytes());
             Thread.sleep(100);
             assertTrue(client.userFeatureActive("hello", 100, Lists.newArrayList("foo")));
+            assertTrue(client.userFeatureActive("hello", -100, Lists.newArrayList("foo")));
             assertTrue(client.userFeatureActive("hello", 124, Lists.newArrayList("bar")));
             assertFalse(client.userFeatureActive("hello", 125, Lists.newArrayList("bar")));
+            assertFalse(client.userFeatureActive("hello", -125, Lists.newArrayList("bar")));
             assertFalse(client.userFeatureActive("nosuchfeature", 1, Lists.newArrayList("foo")));
             framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"50||\"}".getBytes());
             Thread.sleep(100);
