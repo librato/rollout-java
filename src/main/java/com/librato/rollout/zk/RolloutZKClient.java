@@ -166,9 +166,9 @@ public class RolloutZKClient implements RolloutClient {
             }
             int percentage = 0;
             try {
-                percentage = Integer.parseInt(splitResult[0]);
+                percentage = (int) Double.parseDouble(splitResult[0]);
             } catch (NumberFormatException ex) {
-                log.warn("Couldn't parse `{}` as a long, ignoring percentage for key `{}`", splitResult[0], key);
+                log.warn("Couldn't parse `{}` as a double, ignoring percentage for key `{}`", splitResult[0], key);
             }
             final List<String> groups = Arrays.asList(splitResult[2].split(","));
             final List<Long> userIds = new ArrayList<Long>();
