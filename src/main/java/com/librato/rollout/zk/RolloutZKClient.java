@@ -2,6 +2,7 @@ package com.librato.rollout.zk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutClient;
@@ -43,6 +44,7 @@ public class RolloutZKClient implements RolloutClient {
         this.framework = framework;
         this.rolloutPath = rolloutPath;
         this.listener = new CuratorListener() {
+            @SuppressWarnings("ThrowFromFinallyBlock")
             @Override
             public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
                 if (framework.getState() != CuratorFrameworkState.STARTED ||
@@ -57,7 +59,12 @@ public class RolloutZKClient implements RolloutClient {
                     log.error("Error on event update", ex);
                 } finally {
                     // Set the watch just in case it was simply bad data
-                    setWatch();
+                    try {
+                        setWatch();
+                    } catch (Exception e) {
+                        log.error("Could not set watch", e);
+                        throw Throwables.propagate(e);
+                    }
                 }
             }
         };
@@ -159,9 +166,9 @@ public class RolloutZKClient implements RolloutClient {
             }
             int percentage = 0;
             try {
-                percentage = Integer.parseInt(splitResult[0]);
+                percentage = (int) Double.parseDouble(splitResult[0]);
             } catch (NumberFormatException ex) {
-                log.warn("Couldn't parse `{}` as a long, ignoring percentage for key `{}`", splitResult[0], key);
+                log.warn("Couldn't parse `{}` as a double, ignoring percentage for key `{}`", splitResult[0], key);
             }
             final List<String> groups = Arrays.asList(splitResult[2].split(","));
             final List<Long> userIds = new ArrayList<Long>();
