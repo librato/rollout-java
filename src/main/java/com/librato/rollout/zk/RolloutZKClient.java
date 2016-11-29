@@ -2,26 +2,20 @@ package com.librato.rollout.zk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutClient;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.framework.api.CuratorEventType;
-import org.apache.curator.framework.api.CuratorListener;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,39 +29,13 @@ public class RolloutZKClient implements RolloutClient {
     private final AtomicReference<Map<String, Entry>> features = new AtomicReference<Map<String, Entry>>();
     private final AtomicBoolean isStarted = new AtomicBoolean(false);
     private final CuratorFramework framework;
-    private final String rolloutPath;
-    private final CuratorListener listener;
+    private final NodeCache nodeCache;
 
     public RolloutZKClient(final CuratorFramework framework, final String rolloutPath) {
         Preconditions.checkNotNull(framework, "CuratorFramework cannot be null");
         Preconditions.checkArgument(rolloutPath != null && !rolloutPath.isEmpty(), "rolloutPath cannot be null or blank");
         this.framework = framework;
-        this.rolloutPath = rolloutPath;
-        this.listener = new CuratorListener() {
-            @SuppressWarnings("ThrowFromFinallyBlock")
-            @Override
-            public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-                if (framework.getState() != CuratorFrameworkState.STARTED ||
-                        !isStarted.get() ||
-                        event.getType() != CuratorEventType.WATCHED ||
-                        !rolloutPath.equals(event.getPath())) {
-                    return;
-                }
-                try {
-                    getAndSet();
-                } catch (Exception ex) {
-                    log.error("Error on event update", ex);
-                } finally {
-                    // Set the watch just in case it was simply bad data
-                    try {
-                        setWatch();
-                    } catch (Exception e) {
-                        log.error("Could not set watch", e);
-                        throw Throwables.propagate(e);
-                    }
-                }
-            }
-        };
+        this.nodeCache = new NodeCache(framework, rolloutPath);
     }
 
     @Override
@@ -113,11 +81,14 @@ public class RolloutZKClient implements RolloutClient {
         if (framework.getState() != CuratorFrameworkState.STARTED) {
             throw new RuntimeException("CuratorFramework is not started!");
         }
-        // We initialize the value here to mitigate the race condition of watching the path and attempting to get a value
-        // from the map
-        getAndSet();
-        framework.getCuratorListenable().addListener(listener);
-        setWatch();
+        nodeCache.getListenable().addListener(new NodeCacheListener() {
+            @Override
+            public void nodeChanged() throws Exception {
+                build();
+            }
+        });
+        nodeCache.start(true);
+        build();
     }
 
     @Override
@@ -125,15 +96,15 @@ public class RolloutZKClient implements RolloutClient {
         if (!isStarted.compareAndSet(true, false)) {
             throw new RuntimeException("Service already stopped or never started!");
         }
-        framework.getCuratorListenable().removeListener(listener);
+        try {
+            nodeCache.close();
+        } catch (IOException ex) {
+            log.warn("Error when closing NodeCache", ex);
+        }
     }
 
-    private void setWatch() throws Exception {
-        framework.getData().watched().inBackground().forPath(rolloutPath);
-    }
-
-    private void getAndSet() throws Exception {
-        features.set(ImmutableMap.copyOf(parseData(framework.getData().forPath(rolloutPath))));
+    private void build() throws IOException {
+        features.set(ImmutableMap.copyOf(parseData(nodeCache.getCurrentData().getData())));
     }
 
     private Map<String, Entry> parseData(byte[] data) throws IOException {
