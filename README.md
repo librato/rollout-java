@@ -10,7 +10,18 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>com.librato.rollout</groupId>
     <artifactId>rollout</artifactId>
-    <version>0.13</version>
+    <version>0.15</version>
+</dependency>
+```
+
+If you don't have it already, also add [jackson](https://github.com/FasterXML/jackson)
+as a dependency:
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.8.5</version>
 </dependency>
 ```
 
