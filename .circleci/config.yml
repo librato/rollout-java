@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: librato/java-ci:latest
+      - image: wurstmeister/zookeeper
+    steps:
+      - checkout
+      - run: mvn test
