@@ -9,6 +9,7 @@ import com.google.common.collect.Iterables;
 import com.librato.rollout.RolloutClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.slf4j.Logger;
@@ -104,6 +105,10 @@ public class RolloutZKClient implements RolloutClient {
     }
 
     private void build() throws IOException {
+        final ChildData childs = this.nodeCache.getCurrentData();
+        if (childs == null) {
+            throw new IOException("Rollout wasn't set up correctly. Make sure your zk rollout path (e.g., '/rollout/users') exists in zookeeper");
+        }
         features.set(ImmutableMap.copyOf(parseData(nodeCache.getCurrentData().getData())));
     }
 
