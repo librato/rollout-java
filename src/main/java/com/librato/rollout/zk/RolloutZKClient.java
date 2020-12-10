@@ -77,6 +77,7 @@ public class RolloutZKClient implements RolloutClient {
     @Override
     public List<Long> activeUsers(String feature) {
         final Entry entry = features.get().get(feature);
+        if (entry == null) return Collections.emptyList();
         return entry.userIds;
     }
 
