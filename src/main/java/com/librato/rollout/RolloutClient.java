@@ -19,6 +19,12 @@ public interface RolloutClient {
     boolean userFeatureActive(final String feature, long userId);
 
     /**
+     * @param feature   Rollout feature
+     * @return list of active user ids
+     */
+    List<Long> activeUsers(final String feature);
+
+    /**
      * @param feature Rollout feature
      * @return Percentage of given feature, or 0 if feature does not exist
      */

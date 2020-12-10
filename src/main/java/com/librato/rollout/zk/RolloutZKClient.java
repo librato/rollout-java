@@ -75,6 +75,12 @@ public class RolloutZKClient implements RolloutClient {
     }
 
     @Override
+    public List<Long> activeUsers(String feature) {
+        final Entry entry = features.get().get(feature);
+        return entry.userIds;
+    }
+
+    @Override
     public void start() throws Exception {
         if (!isStarted.compareAndSet(false, true)) {
             throw new RuntimeException("Service already started!");
@@ -156,7 +162,7 @@ public class RolloutZKClient implements RolloutClient {
                     log.warn("Couldn't parse `{}` as a long, ignoring user id for key `{}`", id, key);
                 }
             }
-            return new Entry(percentage, userIds, groups);
+            return new Entry(percentage, Collections.unmodifiableList(userIds), Collections.unmodifiableList(groups));
         }
     }
 }
