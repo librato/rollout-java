@@ -204,4 +204,25 @@ public class RolloutZKClientTest {
             }
         }
     }
+
+    @Test
+    public void testGetActiveUsers() throws Exception {
+        RolloutClient client = null;
+        try {
+            client = new RolloutZKClient(framework, rolloutPath);
+            client.start();
+
+            assertTrue(client.activeUsers("nosuchfeature").isEmpty());
+
+            framework.setData().forPath(rolloutPath, "{\"feature:hello\": \"0|1|\", \"feature:another\": \"0|1,2|\",  \"feature:__features__\":\"hello,another\"}".getBytes());
+            Thread.sleep(100);
+
+            assertEquals(Lists.newArrayList(1L), client.activeUsers("hello"));
+            assertEquals(Lists.newArrayList(1L, 2L), client.activeUsers("another"));
+        } finally {
+            if (client != null) {
+                client.stop();
+            }
+        }
+    }
 }
